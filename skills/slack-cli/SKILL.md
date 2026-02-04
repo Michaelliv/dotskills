@@ -169,6 +169,17 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 curl -s -H "Authorization: Bearer ${TOKEN}" \
   "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&limit=20" | \
   jq '[.messages[] | {user, text, ts}]'
+
+# Get messages from last 7 days
+OLDEST=$(date -v -7d +%s)
+curl -s -H "Authorization: Bearer ${TOKEN}" \
+  "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&oldest=${OLDEST}&limit=100" | \
+  jq '[.messages[] | {user, text, ts}]'
+
+# Get messages within a specific date range (oldest and latest are unix timestamps)
+curl -s -H "Authorization: Bearer ${TOKEN}" \
+  "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&oldest=1769593286&latest=1769937696&limit=100" | \
+  jq '[.messages[] | {user, text, ts}]'
 ```
 
 ### List Users
@@ -177,6 +188,19 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 curl -s -H "Authorization: Bearer ${TOKEN}" \
   "https://slack.com/api/users.list" | \
   jq '[.members[] | {name, id, real_name}]'
+
+# Resolve multiple user IDs (no batch endpoint — fetch all and filter)
+curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | \
+  jq '[.members[] | select(.id == "U08QE78RTJT" or .id == "U08QE79QHAT") | {id, name: .real_name}]'
+```
+
+### Workspace Info
+
+```bash
+# Use auth.test (not team.info — team.info requires a scope we don't have)
+curl -s -H "Authorization: Bearer ${TOKEN}" \
+  "https://slack.com/api/auth.test" | \
+  jq '{team, team_id, url}'
 ```
 
 ### Search Messages
@@ -227,3 +251,4 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 - For direct API calls, always quote the URL to prevent shell glob expansion
 - Pagination: most list endpoints support `cursor` and `limit` parameters — check `response_metadata.next_cursor` in the response
 - To look up a user ID by name: `curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | jq -r '.members[] | select(.real_name | test("Name"; "i")) | {name, id, real_name}'`
+- **Message permalinks:** `https://<workspace>.slack.com/archives/<channel_id>/p<ts_without_dot>` — remove the dot from the message timestamp (e.g. ts `1769935497.539749` becomes `p1769935497539749`)
