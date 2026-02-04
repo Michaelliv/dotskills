@@ -107,6 +107,20 @@ export SLACK_CLI_TOKEN='xoxp-your-token'
 
 Add to `~/.zshrc` or `~/.bashrc` to persist.
 
+### Via psst (recommended)
+
+Store the token securely in the global psst vault:
+
+```bash
+psst --global set SLACK_CLI_TOKEN --tag slack
+```
+
+Then use it with commands:
+
+```bash
+psst --global SLACK_CLI_TOKEN -- slack chat send 'Hello!' '#channel'
+```
+
 ## Verify
 
 ```bash

@@ -28,6 +28,27 @@ If `slack` is not available or not configured, see [references/INSTALLATION.md](
 
 The token is stored at the path configured in the `slack` binary's `etcdir` variable (typically `/opt/homebrew/etc/slack-cli/.slack` on macOS). You can also use the `SLACK_CLI_TOKEN` environment variable.
 
+### Credential Management with psst
+
+Store the Slack token in the global psst vault:
+
+```bash
+psst --global set SLACK_CLI_TOKEN --tag slack
+```
+
+Then use it to inject the token for built-in commands:
+
+```bash
+psst --global SLACK_CLI_TOKEN -- slack chat send 'Hello!' '#channel'
+```
+
+For direct API calls:
+
+```bash
+TOKEN=$(psst --global get SLACK_CLI_TOKEN)
+curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/..."
+```
+
 ## Built-in Commands
 
 The `slack` CLI supports these commands natively:
