@@ -111,6 +111,11 @@ All commands support:
 - `--monochrome|-m` — No color in jq output
 - `--trace|-x` — Enable bash trace for debugging
 
+## Known Limitations
+
+- **DMs via built-in CLI don't work reliably.** `slack chat send 'msg' '@user'` often fails with `channel_not_found`. Use the direct API pattern below instead.
+- **Messages sent via `chat:write` appear as the Slack App** (e.g. "MicBot"), not as your user. This is a Slack API limitation — even with a user token, the app identity is used.
+
 ## Direct API Calls
 
 The `slack` CLI doesn't cover all Slack API methods. For anything beyond the built-in commands, call the Slack API directly using `curl`. Read the token from the CLI's config file.
@@ -122,6 +127,32 @@ TOKEN=$(cat /opt/homebrew/etc/slack-cli/.slack)
 # Or if SLACK_CLI_TOKEN is set:
 TOKEN="${SLACK_CLI_TOKEN}"
 ```
+
+### Sending Direct Messages
+
+The built-in `slack chat send` doesn't handle DMs well. Use the API directly:
+
+```bash
+# Step 1: Open (or find) the DM channel with a user
+DM_CHANNEL=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"users":"U064S7R6LRX"}' \
+  "https://slack.com/api/conversations.open" | jq -r '.channel.id')
+
+# Step 2: Send the message
+curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "{\"channel\":\"${DM_CHANNEL}\",\"text\":\"Hello!\"}" \
+  "https://slack.com/api/chat.postMessage"
+```
+
+> **Requires `im:write` scope.** Without it, `conversations.open` will fail. If you don't have `im:write`, you can work around it by finding an existing DM channel:
+> ```bash
+> # Fallback: find existing DM channel via conversations.list
+> DM_CHANNEL=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+>   "https://slack.com/api/conversations.list?types=im&limit=200" | \
+>   jq -r '.channels[] | select(.user == "U064S7R6LRX") | .id')
+> ```
 
 ### List Channels
 
@@ -195,3 +226,4 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 - Pipe commands together using `--filter '.ts + "\n" + .channel'` to chain send/update/delete
 - For direct API calls, always quote the URL to prevent shell glob expansion
 - Pagination: most list endpoints support `cursor` and `limit` parameters — check `response_metadata.next_cursor` in the response
+- To look up a user ID by name: `curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | jq -r '.members[] | select(.real_name | test("Name"; "i")) | {name, id, real_name}'`

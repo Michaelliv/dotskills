@@ -42,33 +42,50 @@ You need a **User OAuth Token** (`xoxp-...`) to act as yourself.
 3. Go to **OAuth & Permissions** in the sidebar
 4. Under **User Token Scopes**, add the scopes you need:
 
-### Recommended Scopes
+### Required Scopes
+
+These are the scopes needed for full functionality:
 
 | Scope | Purpose |
 |---|---|
+| **Chat** | |
 | `chat:write` | Send, update, delete messages |
+| **Channels** | |
 | `channels:read` | List public channels |
 | `channels:history` | Read public channel messages |
+| `channels:write` | Create/manage public channels |
 | `groups:read` | List private channels |
 | `groups:history` | Read private channel messages |
+| `groups:write` | Create/manage private channels |
+| **Direct Messages** | |
 | `im:read` | List DMs |
 | `im:history` | Read DMs |
+| `im:write` | Open DM channels (required to send DMs via API) |
 | `mpim:read` | List group DMs |
 | `mpim:history` | Read group DMs |
+| `mpim:write` | Open group DM channels |
+| **Files** | |
 | `files:read` | List and view files |
 | `files:write` | Upload files |
+| **Do Not Disturb** | |
 | `dnd:read` | View snooze status |
 | `dnd:write` | Start/end snooze |
+| **Reminders** | |
 | `reminders:read` | List reminders |
 | `reminders:write` | Add/complete/delete reminders |
+| **Search & Users** | |
 | `search:read` | Search messages and files |
 | `users:read` | List users |
+| `users.profile:write` | Set status and presence |
+| **Reactions & Pins** | |
 | `reactions:read` | View reactions |
 | `reactions:write` | Add/remove reactions |
 | `pins:read` | View pins |
 | `pins:write` | Pin/unpin messages |
 
-> **Note:** Add scopes in batches and reinstall if you encounter `invalid_scope` errors during installation. Some newer or granular scopes (e.g. `canvases:*`, `*:write.invites`, `*:write.topic`, `search:read.*`) may cause installation to fail.
+> **Note:** Add scopes in batches and reinstall if you encounter `invalid_scope` errors during installation. Some newer or granular scopes (e.g. `canvases:*`, `*:write.invites`, `*:write.topic`, `search:read.*`) may cause installation to fail. Stick to the scopes listed above.
+>
+> **Important:** When you add new scopes, you must **reinstall the app** to your workspace. This generates a new token — run `slack init` again with the updated token.
 
 5. Click **Install to Workspace** at the top and authorize
 6. Copy the **User OAuth Token** (`xoxp-...`)
