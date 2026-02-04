@@ -11,6 +11,8 @@ compatibility: Requires slack-cli (brew install rockymadden/rockymadden/slack-cl
 
 Interact with Slack workspaces from the command line using `slack-cli` and direct Slack API calls.
 
+> **Assume `slack-cli` is already installed and configured.** If the `slack` command is not found or returns `not_inited`, refer to [references/INSTALLATION.md](references/INSTALLATION.md) for setup instructions.
+
 ## When to Use
 
 - User wants to send, update, or delete Slack messages
