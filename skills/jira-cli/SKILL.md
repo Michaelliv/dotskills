@@ -41,11 +41,9 @@ Credentials are stored in the global psst vault with the `jira` tag:
 # For jira-cli commands (injects JIRA_API_TOKEN)
 psst --global JIRA_API_TOKEN -- jira <command>
 
-# For direct API calls
-USER=$(psst --global get JIRA_USER)
-TOKEN=$(psst --global get JIRA_API_TOKEN)
-SERVER=$(psst --global get JIRA_SERVER)
-curl -s -u "$USER:$TOKEN" "$SERVER/rest/api/3/..."
+# For direct API calls (inline psst get)
+curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
+  "$(psst --global get JIRA_SERVER)/rest/api/3/..."
 ```
 
 ## Common Operations
@@ -210,24 +208,22 @@ psst --global JIRA_API_TOKEN -- jira open
 If jira-cli has issues, use the API directly:
 
 ```bash
-USER=$(psst --global get JIRA_USER)
-TOKEN=$(psst --global get JIRA_API_TOKEN)
-SERVER=$(psst --global get JIRA_SERVER)
-
 # List issues
-curl -s -u "$USER:$TOKEN" \
-  "$SERVER/rest/api/3/search/jql?jql=project=PROJ+ORDER+BY+created+DESC&maxResults=10&fields=key,summary,status" \
+curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
+  "$(psst --global get JIRA_SERVER)/rest/api/3/search/jql?jql=project=PROJ+ORDER+BY+created+DESC&maxResults=10&fields=key,summary,status" \
   | jq -r '.issues[] | "\(.key): \(.fields.summary) [\(.fields.status.name)]"'
 
 # Get user's issues
-curl -s -u "$USER:$TOKEN" \
-  "$SERVER/rest/api/3/search/jql?jql=(assignee=currentUser()+OR+reporter=currentUser())+ORDER+BY+updated+DESC&maxResults=15&fields=key,summary,status"
+curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
+  "$(psst --global get JIRA_SERVER)/rest/api/3/search/jql?jql=(assignee=currentUser()+OR+reporter=currentUser())+ORDER+BY+updated+DESC&maxResults=15&fields=key,summary,status"
 
 # View single issue
-curl -s -u "$USER:$TOKEN" "$SERVER/rest/api/3/issue/PROJ-1234" | jq .
+curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
+  "$(psst --global get JIRA_SERVER)/rest/api/3/issue/PROJ-1234" | jq .
 
 # Get available projects
-curl -s -u "$USER:$TOKEN" "$SERVER/rest/api/2/project" | jq -r '.[] | "\(.key): \(.name)"'
+curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
+  "$(psst --global get JIRA_SERVER)/rest/api/2/project" | jq -r '.[] | "\(.key): \(.name)"'
 ```
 
 ## Quick Reference

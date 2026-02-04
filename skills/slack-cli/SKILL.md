@@ -36,17 +36,16 @@ Store the Slack token in the global psst vault:
 psst --global set SLACK_CLI_TOKEN --tag slack
 ```
 
-Then use it to inject the token for built-in commands:
+For built-in commands, inject the token via psst:
 
 ```bash
 psst --global SLACK_CLI_TOKEN -- slack chat send 'Hello!' '#channel'
 ```
 
-For direct API calls:
+For direct API calls, use inline `psst get`:
 
 ```bash
-TOKEN=$(psst --global get SLACK_CLI_TOKEN)
-curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/..."
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" "https://slack.com/api/..."
 ```
 
 ## Built-in Commands
@@ -141,27 +140,21 @@ All commands support:
 
 The `slack` CLI doesn't cover all Slack API methods. For anything beyond the built-in commands, call the Slack API directly using `curl`. Read the token from the CLI's config file.
 
-### Reading the Token
-
-```bash
-TOKEN=$(cat /opt/homebrew/etc/slack-cli/.slack)
-# Or if SLACK_CLI_TOKEN is set:
-TOKEN="${SLACK_CLI_TOKEN}"
-```
-
 ### Sending Direct Messages
 
 The built-in `slack chat send` doesn't handle DMs well. Use the API directly:
 
 ```bash
 # Step 1: Open (or find) the DM channel with a user
-DM_CHANNEL=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+DM_CHANNEL=$(curl -s -X POST \
+  -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   -H "Content-Type: application/json" \
   -d '{"users":"USER_ID"}' \
   "https://slack.com/api/conversations.open" | jq -r '.channel.id')
 
 # Step 2: Send the message
-curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+curl -s -X POST \
+  -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   -H "Content-Type: application/json" \
   -d "{\"channel\":\"${DM_CHANNEL}\",\"text\":\"Hello!\"}" \
   "https://slack.com/api/chat.postMessage"
@@ -169,8 +162,8 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 
 > **Requires `im:write` scope.** Without it, `conversations.open` will fail. If you don't have `im:write`, you can work around it by finding an existing DM channel:
 > ```bash
-> # Fallback: find existing DM channel via conversations.list
-> DM_CHANNEL=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
+> DM_CHANNEL=$(curl -s \
+>   -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
 >   "https://slack.com/api/conversations.list?types=im&limit=200" | \
 >   jq -r '.channels[] | select(.user == "USER_ID") | .id')
 > ```
@@ -178,7 +171,7 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 ### List Channels
 
 ```bash
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=200" | \
   jq '[.channels[] | {name, id, is_private}]'
 ```
@@ -187,18 +180,18 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 
 ```bash
 # Get recent messages from a channel (use channel ID)
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/conversations.history?channel=CHANNEL_ID&limit=20" | \
   jq '[.messages[] | {user, text, ts}]'
 
 # Get messages from last 7 days
 OLDEST=$(date -v -7d +%s)
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/conversations.history?channel=CHANNEL_ID&oldest=${OLDEST}&limit=100" | \
   jq '[.messages[] | {user, text, ts}]'
 
 # Get messages within a specific date range (oldest and latest are unix timestamps)
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/conversations.history?channel=CHANNEL_ID&oldest=${START_TS}&latest=${END_TS}&limit=100" | \
   jq '[.messages[] | {user, text, ts}]'
 ```
@@ -206,12 +199,13 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ### List Users
 
 ```bash
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/users.list" | \
   jq '[.members[] | {name, id, real_name}]'
 
 # Resolve multiple user IDs (no batch endpoint — fetch all and filter)
-curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
+  "https://slack.com/api/users.list" | \
   jq '[.members[] | select(.id == "U1234" or .id == "U5678") | {id, name: .real_name}]'
 ```
 
@@ -219,7 +213,7 @@ curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" |
 
 ```bash
 # Use auth.test (not team.info — team.info requires a scope we don't have)
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/auth.test" | \
   jq '{team, team_id, url}'
 ```
@@ -227,7 +221,7 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ### Search Messages
 
 ```bash
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/search.messages?query=keyword&count=10" | \
   jq '[.messages.matches[] | {channel: .channel.name, text, ts}]'
 ```
@@ -236,13 +230,14 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 
 ```bash
 # Add a reaction
-curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+curl -s -X POST \
+  -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   -H "Content-Type: application/json" \
   -d '{"channel":"CHANNEL_ID","timestamp":"1234567890.123456","name":"thumbsup"}' \
   "https://slack.com/api/reactions.add"
 
 # Get reactions on a message
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/reactions.get?channel=CHANNEL_ID&timestamp=1234567890.123456"
 ```
 
@@ -250,7 +245,7 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 
 ```bash
 # Get replies in a thread (use the parent message ts)
-curl -s -H "Authorization: Bearer ${TOKEN}" \
+curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   "https://slack.com/api/conversations.replies?channel=CHANNEL_ID&ts=1234567890.123456" | \
   jq '[.messages[] | {user, text, ts}]'
 ```
@@ -258,7 +253,8 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ### Post to a Thread
 
 ```bash
-curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
+curl -s -X POST \
+  -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" \
   -H "Content-Type: application/json" \
   -d '{"channel":"CHANNEL_ID","text":"reply text","thread_ts":"1234567890.123456"}' \
   "https://slack.com/api/chat.postMessage"
@@ -271,5 +267,5 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 - Pipe commands together using `--filter '.ts + "\n" + .channel'` to chain send/update/delete
 - For direct API calls, always quote the URL to prevent shell glob expansion
 - Pagination: most list endpoints support `cursor` and `limit` parameters — check `response_metadata.next_cursor` in the response
-- To look up a user ID by name: `curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | jq -r '.members[] | select(.real_name | test("Name"; "i")) | {name, id, real_name}'`
+- To look up a user ID by name: `curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" "https://slack.com/api/users.list" | jq -r '.members[] | select(.real_name | test("Name"; "i")) | {name, id, real_name}'`
 - **Message permalinks:** `https://<workspace>.slack.com/archives/<channel_id>/p<ts_without_dot>` — remove the dot from the message timestamp (e.g. ts `1769935497.539749` becomes `p1769935497539749`)
