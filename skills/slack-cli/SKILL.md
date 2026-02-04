@@ -114,7 +114,7 @@ All commands support:
 ## Known Limitations
 
 - **DMs via built-in CLI don't work reliably.** `slack chat send 'msg' '@user'` often fails with `channel_not_found`. Use the direct API pattern below instead.
-- **Messages sent via `chat:write` appear as the Slack App** (e.g. "MicBot"), not as your user. This is a Slack API limitation — even with a user token, the app identity is used.
+- **Messages sent via `chat:write` appear as the Slack App**, not as your user. This is a Slack API limitation — even with a user token, the app identity is used.
 
 ## Direct API Calls
 
@@ -136,7 +136,7 @@ The built-in `slack chat send` doesn't handle DMs well. Use the API directly:
 # Step 1: Open (or find) the DM channel with a user
 DM_CHANNEL=$(curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"users":"U064S7R6LRX"}' \
+  -d '{"users":"USER_ID"}' \
   "https://slack.com/api/conversations.open" | jq -r '.channel.id')
 
 # Step 2: Send the message
@@ -151,7 +151,7 @@ curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
 > # Fallback: find existing DM channel via conversations.list
 > DM_CHANNEL=$(curl -s -H "Authorization: Bearer ${TOKEN}" \
 >   "https://slack.com/api/conversations.list?types=im&limit=200" | \
->   jq -r '.channels[] | select(.user == "U064S7R6LRX") | .id')
+>   jq -r '.channels[] | select(.user == "USER_ID") | .id')
 > ```
 
 ### List Channels
@@ -167,18 +167,18 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ```bash
 # Get recent messages from a channel (use channel ID)
 curl -s -H "Authorization: Bearer ${TOKEN}" \
-  "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&limit=20" | \
+  "https://slack.com/api/conversations.history?channel=CHANNEL_ID&limit=20" | \
   jq '[.messages[] | {user, text, ts}]'
 
 # Get messages from last 7 days
 OLDEST=$(date -v -7d +%s)
 curl -s -H "Authorization: Bearer ${TOKEN}" \
-  "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&oldest=${OLDEST}&limit=100" | \
+  "https://slack.com/api/conversations.history?channel=CHANNEL_ID&oldest=${OLDEST}&limit=100" | \
   jq '[.messages[] | {user, text, ts}]'
 
 # Get messages within a specific date range (oldest and latest are unix timestamps)
 curl -s -H "Authorization: Bearer ${TOKEN}" \
-  "https://slack.com/api/conversations.history?channel=C05SGNZ8TSN&oldest=1769593286&latest=1769937696&limit=100" | \
+  "https://slack.com/api/conversations.history?channel=CHANNEL_ID&oldest=${START_TS}&latest=${END_TS}&limit=100" | \
   jq '[.messages[] | {user, text, ts}]'
 ```
 
@@ -191,7 +191,7 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 
 # Resolve multiple user IDs (no batch endpoint — fetch all and filter)
 curl -s -H "Authorization: Bearer ${TOKEN}" "https://slack.com/api/users.list" | \
-  jq '[.members[] | select(.id == "U08QE78RTJT" or .id == "U08QE79QHAT") | {id, name: .real_name}]'
+  jq '[.members[] | select(.id == "U1234" or .id == "U5678") | {id, name: .real_name}]'
 ```
 
 ### Workspace Info
@@ -217,12 +217,12 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 # Add a reaction
 curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"channel":"C05SGNZ8TSN","timestamp":"1234567890.123456","name":"thumbsup"}' \
+  -d '{"channel":"CHANNEL_ID","timestamp":"1234567890.123456","name":"thumbsup"}' \
   "https://slack.com/api/reactions.add"
 
 # Get reactions on a message
 curl -s -H "Authorization: Bearer ${TOKEN}" \
-  "https://slack.com/api/reactions.get?channel=C05SGNZ8TSN&timestamp=1234567890.123456"
+  "https://slack.com/api/reactions.get?channel=CHANNEL_ID&timestamp=1234567890.123456"
 ```
 
 ### Thread Replies
@@ -230,7 +230,7 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ```bash
 # Get replies in a thread (use the parent message ts)
 curl -s -H "Authorization: Bearer ${TOKEN}" \
-  "https://slack.com/api/conversations.replies?channel=C05SGNZ8TSN&ts=1234567890.123456" | \
+  "https://slack.com/api/conversations.replies?channel=CHANNEL_ID&ts=1234567890.123456" | \
   jq '[.messages[] | {user, text, ts}]'
 ```
 
@@ -239,13 +239,13 @@ curl -s -H "Authorization: Bearer ${TOKEN}" \
 ```bash
 curl -s -X POST -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
-  -d '{"channel":"C05SGNZ8TSN","text":"reply text","thread_ts":"1234567890.123456"}' \
+  -d '{"channel":"CHANNEL_ID","text":"reply text","thread_ts":"1234567890.123456"}' \
   "https://slack.com/api/chat.postMessage"
 ```
 
 ## Tips
 
-- Channel arguments accept `#name` format for built-in commands, but direct API calls require channel IDs (e.g. `C05SGNZ8TSN`)
+- Channel arguments accept `#name` format for built-in commands, but direct API calls require channel IDs (e.g. `CHANNEL_ID`)
 - Use `--filter` with any built-in command to extract specific fields via jq
 - Pipe commands together using `--filter '.ts + "\n" + .channel'` to chain send/update/delete
 - For direct API calls, always quote the URL to prevent shell glob expansion
