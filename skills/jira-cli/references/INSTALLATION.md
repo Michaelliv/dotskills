@@ -4,7 +4,16 @@
 
 - `curl` — for HTTP requests
 - `jq` — for JSON processing
-- `psst` — for credential management
+- `psst` — for secure credential management
+
+Install psst:
+
+```bash
+npm install -g @pssst/cli
+psst init --global
+```
+
+See [psst](https://github.com/Michaelliv/psst) for details. psst stores secrets encrypted at rest and injects them into subprocess environments — agents use secrets without seeing them.
 
 ## Install jira-cli
 

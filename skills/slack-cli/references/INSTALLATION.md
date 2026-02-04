@@ -4,8 +4,18 @@
 
 - `curl` — for HTTP requests
 - `jq` — for JSON processing
+- `psst` — for secure credential management (recommended)
 
-Both are typically available on macOS. Install jq via `brew install jq` if needed.
+Both `curl` and `jq` are typically available on macOS. Install jq via `brew install jq` if needed.
+
+Install psst:
+
+```bash
+npm install -g @pssst/cli
+psst init --global
+```
+
+See [psst](https://github.com/Michaelliv/psst) for details. psst stores secrets encrypted at rest and injects them into subprocess environments — agents use secrets without seeing them.
 
 ## Install slack-cli
 
