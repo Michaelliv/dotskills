@@ -1,0 +1,9 @@
+# Installed skill directories (created by `npx skills add`)
+.agent/
+.agents/
+.claude/skills/
+.cursor/
+.junie/
+
+# macOS
+.DS_Store
