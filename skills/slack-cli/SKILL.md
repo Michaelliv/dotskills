@@ -11,7 +11,7 @@ compatibility: Requires slack-cli (brew install rockymadden/rockymadden/slack-cl
 
 Interact with Slack workspaces from the command line using `slack-cli` and direct Slack API calls.
 
-> **Assume `slack-cli` is already installed and configured.** If the `slack` command is not found or returns `not_inited`, refer to [references/INSTALLATION.md](references/INSTALLATION.md) for setup instructions.
+> **Assume `slack-cli` is already installed and configured.** If the `slack` command is not found or returns `not_inited`, use the Read tool to open `references/INSTALLATION.md` (relative to this skill's base directory) and follow the setup instructions.
 
 ## When to Use
 
@@ -21,32 +21,6 @@ Interact with Slack workspaces from the command line using `slack-cli` and direc
 - User wants to upload files to Slack
 - User wants to manage reminders, snooze, or presence
 - User wants to automate Slack workflows
-
-## Setup
-
-If `slack` is not available or not configured, see [references/INSTALLATION.md](references/INSTALLATION.md) for full setup instructions.
-
-The token is stored at the path configured in the `slack` binary's `etcdir` variable (typically `/opt/homebrew/etc/slack-cli/.slack` on macOS). You can also use the `SLACK_CLI_TOKEN` environment variable.
-
-### Credential Management with psst
-
-Store the Slack token in the global psst vault:
-
-```bash
-psst --global set SLACK_CLI_TOKEN --tag slack
-```
-
-For built-in commands, inject the token via psst:
-
-```bash
-psst --global SLACK_CLI_TOKEN -- slack chat send 'Hello!' '#channel'
-```
-
-For direct API calls, use inline `psst get`:
-
-```bash
-curl -s -H "Authorization: Bearer $(psst --global get SLACK_CLI_TOKEN)" "https://slack.com/api/..."
-```
 
 ## Built-in Commands
 

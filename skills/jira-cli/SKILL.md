@@ -11,7 +11,7 @@ compatibility: Requires jira-cli (brew install ankitpokhrel/jira-cli/jira-cli), 
 
 Interact with Atlassian Jira from the command line using `jira-cli` and direct API calls.
 
-> **Assume `jira-cli` is already installed and configured.** If the `jira` command is not found or not configured, refer to [references/INSTALLATION.md](references/INSTALLATION.md) for setup instructions.
+> **Assume `jira-cli` is already installed and configured.** If the `jira` command is not found or not configured, use the Read tool to open `references/INSTALLATION.md` (relative to this skill's base directory) and follow the setup instructions.
 
 ## Important: Confirm Before Creating
 
@@ -32,19 +32,6 @@ When the user requests a new ticket, confirm the summary and ask if they want to
 - User wants to transition ticket statuses
 - User wants to manage epics and link issues
 - User wants to automate Jira workflows
-
-## Authentication
-
-Credentials are stored in the global psst vault with the `jira` tag:
-
-```bash
-# For jira-cli commands (injects JIRA_API_TOKEN)
-psst --global JIRA_API_TOKEN -- jira <command>
-
-# For direct API calls (inline psst get)
-curl -s -u "$(psst --global get JIRA_USER):$(psst --global get JIRA_API_TOKEN)" \
-  "$(psst --global get JIRA_SERVER)/rest/api/3/..."
-```
 
 ## Common Operations
 
